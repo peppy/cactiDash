@@ -1,0 +1,144 @@
+<html>
+<head>
+	<title>cactiDash</title>
+	<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<script type="text/javascript">
+
+	var TIME_BETWEEN_UPDATES = 120000;
+
+	var CACTI_URL            = 'https://your-domain.com/cacti/';
+	var GRAPH_IMAGE_URL      = CACTI_URL + 'graph_image.php?action=view&local_graph_id={0}&rra_id={1}';
+	var GRAPH_INFO_URL       = CACTI_URL + 'graph.php?local_graph_id={0}&rra_id=all';
+
+	var APPEND_TIMESTAMP     = false;
+
+	var timers = new Array(1024);
+
+	$(document).ready(function() {
+		addServer({name:"server1",	bw: 155, cpu: 175, mem: 159, load: 0,	ngx: 0,		disks: null});
+		addServer({name:"server2",	bw: 208, cpu: 209, mem: 212, load: 210,	ngx: 213, 	disks: [245, 246]});
+		addServer({name:"server3",	bw: 229, cpu: 232, mem: 233, load: 248,	ngx: 236, 	disks: [230, 234, 235]});
+		addServer({name:"anyname",	bw: 238, cpu: 239, mem: 243, load: 242,	ngx: 241,	disks: [240, 249]});
+
+	});
+
+	function addServer(serverInfo)
+	{
+		var disks = "";
+		if (serverInfo.disks)
+			for (var i in serverInfo.disks)
+				disks += drawGraph(serverInfo.disks[i], 2);
+
+		$("#main").append(
+			"<div class='server' id='" + serverInfo.name + "'>" +
+			"    <div clas='name'>" + serverInfo.name + "</div>" +
+			drawGraph(serverInfo.bw) +
+			drawGraph(serverInfo.cpu) +
+			drawGraph(serverInfo.mem) +
+			drawGraph(serverInfo.load) +
+			drawGraph(serverInfo.ngx) +
+			disks +
+			"</div>"
+		);
+	}
+
+	function updateGraph(id)
+	{
+		var graph = $("#" + id);
+
+		var url = GRAPH_IMAGE_URL.replace("{0}", id).replace("{1}", graph.attr('period'));
+		if (APPEND_TIMESTAMP)
+			url += '?' + new Date().getTime();
+
+		graph.fadeTo(400, 0.8);
+		graph.attr('src', url);
+	}
+
+	function onGraphLoad(graph)
+	{
+		$(graph).stop().fadeTo(100, 1);
+		scheduleUpdate(graph.id);
+	}
+
+	function onGraphError(graph)
+	{
+		scheduleUpdate(graph.id, 1000);
+	}
+
+	function drawGraph(id, period)
+	{
+		if (!period) period = 1;
+
+		if (id)
+		{
+			scheduleUpdate(id, 100);
+			var url = GRAPH_INFO_URL.replace('{0}', id);
+			return '<a target="_blank" href="' + url + '"><img id="' + id + '" period="' + period + '" width=595px height=231px onload="onGraphLoad(this)" onerror="onGraphError(this)" class="graph"/></a>';
+		}
+		else
+		{
+			return '<div class="graph"></div>';
+		}
+	}
+
+	function scheduleUpdate(id, delay)
+	{
+		if (timers[id])
+			clearTimeout(timers[id]);
+		timers[id] = setTimeout(function() { updateGraph(id); }, delay ? delay : TIME_BETWEEN_UPDATES);
+	}
+
+	</script>
+	<style type="text/css">
+		a {
+			border: none;
+		}
+
+		body {
+			background: #222;
+			color: #fff;
+			margin: 10px;
+			padding: 0;
+			font-family: "Arial Grande",Tahoma,Helvetica,Arial,sans-serif;
+			font-size: 8pt;
+		}
+
+		#main {
+			white-space: nowrap;
+			width: 4000px;
+			margin: 10px;
+			overflow: auto;
+		}
+
+		.graph {
+			display: block;
+			margin: 2px;
+			width: 366px;
+			height: 150px;
+			background: #555;
+			background-image: -webkit-linear-gradient(top, #333, #555);
+			border-radius: 6px;
+		}
+
+		@media only screen and (-webkit-min-device-pixel-ratio: 2)
+		{
+			.graph {
+				width: 298px;
+				height: 116px;
+			}
+		}
+
+		.server {
+			display: inline-block;
+			float: left;
+			text-align: center;
+		}
+	</style>
+</head>
+<body>
+
+<div id="main">
+</div>
+
+</body>
+</html>
