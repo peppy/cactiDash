@@ -18,4 +18,4 @@ further features added, please don't hesitate to fork or file an issue.
 
 ## Screenshots
 
-![cactiDash](http://puu.sh/QBQm.png)
+![cactiDash](https://dl.dropbox.com/u/16332218/cactiDash.jpg)
